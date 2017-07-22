@@ -71,7 +71,7 @@ target/
 .ipynb_checkpoints
 
 # Sensitive JSON files
-.json
+keys.json
 
 # pyenv
 .python-version
