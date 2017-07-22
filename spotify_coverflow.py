@@ -61,14 +61,15 @@ if token:
         image_src = results["item"]["album"]["images"][0]["url"]
         artist = results["item"]["album"]["artists"][0]["name"]
         album = results["item"]["album"]["name"]
-        i_artist = itunes.search_album(album, artist)[0];
 
         if current != image_src: 
             try:
+                i_artist = itunes.search_album(album, artist)[0];
                 hd_src = i_artist.get_artwork()['100']
                 hd_src = hd_src.replace('100x100bb', '100000x100000-99')
-                draw_image(950, 950, hd_src, False)
-            except KeyError:
+                draw_image(1000, 1000, hd_src, False)
+            except:
+                print "Unexpected error:", sys.exc_info()[0]
                 draw_image(640, 640, image_src, True)
             current = image_src
         else:
