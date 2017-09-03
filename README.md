@@ -24,4 +24,4 @@ SpotifyCoverFlow is a simple script to display a full-screen high resolution ima
 
 As it stands, Spotify only supports image artwork up to `640x640`. To counteract this, the current playing song is then searched through iTunes to grab artwork up to `10000x10000`. However, if the artwork can't be found on iTunes, the lower resolution Spotify artwork will be displayed.
 
-This project is still actively being worked on. More features to come.
+This project is still a work in progress. There will be more bug fixes and additonal functionality to come.
