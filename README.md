@@ -1,6 +1,6 @@
 # SpotifyCoverFlow
 
-[![PyPI](https://img.shields.io/badge/Python-2.7.13-green.svg)]()
+[![PyPI](https://img.shields.io/badge/Python-2.7-green.svg)]()
 
 This project requires a local `keys.json` file, formatted like this: 
 
