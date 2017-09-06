@@ -44,7 +44,6 @@ def convert_image(src):
     image_str = urlopen(src).read()
     im = Image.open(BytesIO(image_str))
     image = ImageTk.PhotoImage(im)
-    images.append(image)
     return image
 
 def check_itunes_artwork(album, artist):
@@ -88,7 +87,6 @@ def draw_window():
         name_label.place(x=1500, y=540, anchor="center")
         artist_label = Label(f, text=get_current_playing(authorize())[2], bg="black", fg="white", font=("Courier New", 20))
         artist_label.place(x=1500, y=480, anchor="center")
-
         root.update_idletasks()
         root.update()
         time.sleep(4)
