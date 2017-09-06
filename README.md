@@ -14,6 +14,23 @@ This project requires a local `keys.json` file, formatted like this:
 }
 ```
 
+## Requirements
+```
+	PIL - 1.1.7
+	http://www.pythonware.com/products/pil/#pil117
+```
+```
+	Python iTunes
+	https://pypi.python.org/pypi/python-itunes/1.0
+	Unzip
+	python setup.py install
+```
+```
+	pip install spotipy
+	or
+	easy_install spotipy
+```
+
 Keys and callback URI are given with your personal Spotify devloper account, please register at [Spotify Developer](https://developer.spotify.com/my-applications/#!/).
 
 -----
