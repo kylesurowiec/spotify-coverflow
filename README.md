@@ -10,7 +10,6 @@ This project requires a local `keys.json` file, formatted like this:
 	"id": "xxx",
 	"secret": "xxx",
 	"uri": "http://localhost:8888/callback"
-	
 }
 ```
 Keys and callback URI are given with your personal Spotify devloper account, please register at [Spotify Developer](https://developer.spotify.com/my-applications/#!/).
