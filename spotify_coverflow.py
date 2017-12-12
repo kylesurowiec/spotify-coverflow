@@ -25,14 +25,14 @@ width_height = [1920, 1080]
 # --------------------------
 
 
-# Send user credentials to Spotify Auth
 def authorize():
+    '''Send user credentials to Spotify Auth'''
     token = util.prompt_for_user_token(username, scope, id, secret, uri)
     return token
 
 
-# Return information about the current playing song
 def get_current_playing(token):
+    '''Return information about the current playing song'''
     if token:
         sp = spotipy.Spotify(auth=token)
         results = sp.currently_playing()
@@ -45,24 +45,28 @@ def get_current_playing(token):
         print "Can't get token!"
 
 
-# Convert the image url to something that tkinter can use
 def convert_image(src):
+    '''Convert the image url to Byte Array'''
     image_str = urlopen(src).read()
     im = Image.open(BytesIO(image_str))
     image = ImageTk.PhotoImage(im)
     return image
 
 
-# Search the iTunes API and grab the most popular result
 def check_itunes_artwork(album, artist):
+    '''Search the iTunes API and grab the most popular result'''
     i_artist = itunes.search_album(album, artist)[0]
     hd_img = i_artist.get_artwork()['100']
     hd_img = hd_img.replace('100x100bb', '1000x1000')
     return hd_img
 
 
-# Get the current playing image url, check iTunes first, then Spotify if something goes wrong
 def get_img_src():
+    '''
+    Get the current playing song artwork url from Spotify,
+    search iTunes for same album and artist to get artwork,
+    return Spotify artwork if something goes wrong
+    '''
     album = get_current_playing(authorize())[1]
     artist = get_current_playing(authorize())[2]
     try:
@@ -73,8 +77,8 @@ def get_img_src():
         return src
 
 
-# Draw the image into the tkinter window
 def draw_window():
+    '''Main event loop, draw the image and text to tkinter window'''
     root = Tk()
     root.configure(bg="black", cursor="none")
     root.attributes('-fullscreen', True)
@@ -110,6 +114,5 @@ def draw_window():
         artist_label.destroy()
 
 
-# Run the main window loop
 if __name__ == "__main__":
     draw_window()
