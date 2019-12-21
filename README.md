@@ -1,38 +1,12 @@
 # SpotifyCoverFlow
 
-[![PyPI](https://img.shields.io/badge/Python-2.7-green.svg)]()
+[![PyPI](https://img.shields.io/badge/Python-3.7-green.svg)]()
 
 This project requires a local `keys.json` file, formatted like this: 
 
-```
-{
-	"username": "xxx",
-	"id": "xxx",
-	"secret": "xxx",
-	"uri": "http://localhost:8888/callback"
-}
-```
 Keys and callback URI are given with your personal Spotify devloper account, please register at [Spotify Developer](https://developer.spotify.com/my-applications/#!/).
 
-## Requirements
-```
-	PIL - 1.1.7
-	http://www.pythonware.com/products/pil/#pil117
-```
-```
-	Python iTunes
-	https://pypi.python.org/pypi/python-itunes/1.0
-	Unzip
-	python setup.py install
-```
-```
-	pip install spotipy
-	or
-	easy_install spotipy
-```
------
-
-SpotifyCoverFlow is a simple script to display a full-screen high resolution image of your current playing (or most recent) song on Spotify. The intended use is to dedicate a RaspberryPi (or similar device) and a monitor/screen to be an always on digital poster for your favorite music artwork.
+SpotifyCoverFlow is a simple script to display a full-screen & high resolution image of your current playing (or most recent) song on Spotify. The intended use is to dedicate a RaspberryPi (or similar device) and a monitor/screen to be an always on digital poster for your favorite music artwork.
 
 ![Example](http://i.imgur.com/ruRSCt3.png)
 
