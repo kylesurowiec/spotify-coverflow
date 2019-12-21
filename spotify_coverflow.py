@@ -1,118 +1,164 @@
-#!python2
-
-import json
 import time
-from io import BytesIO
-import itunes
+import requests
+import itunespy
 import spotipy
 import spotipy.util as util
-from Tkinter import *
+from io import BytesIO
 from PIL import Image, ImageTk
-from urllib2 import urlopen
+from tkinter import Tk, Frame, Label
 
-# Load in keys for Spotify
-with open('keys.json') as keys:
-    data = json.load(keys)
+from pprint import pprint
 
+MONITOR_WIDTH = 2560
+MONITOR_HEIGHT = 1440
 
-# Spotify API credentials, Globals
-scope = 'user-read-currently-playing'
-username = data["username"]
-id = data["id"]
-secret = data["secret"]
-uri = data["uri"]
-width_height = [1920, 1080]
-# --------------------------
+USERNAME = ""
+SECRET = ""
+SCOPE = ""
+URI = "http://localhost:8888/callback"
+ID = ""
 
 
-def authorize():
-    '''Send user credentials to Spotify Auth'''
-    token = util.prompt_for_user_token(username, scope, id, secret, uri)
+def get_token():
+    '''
+    This will open a new browser window if the developer account information
+    above is correct. Follow the instructions that appear in the console dialog.
+    After doing this once the token will auto refresh as long as the .cache file exists
+    in the root directory.
+    '''
+
+    token = util.prompt_for_user_token(USERNAME, SCOPE, ID, SECRET, URI)
     return token
 
 
 def get_current_playing(token):
-    '''Return information about the current playing song'''
-    if token:
-        sp = spotipy.Spotify(auth=token)
-        results = sp.currently_playing()
-        image_src = results["item"]["album"]["images"][0]["url"]
-        artist = results["item"]["album"]["artists"][0]["name"]
-        album = results["item"]["album"]["name"]
-        song = results["item"]["name"]
-        return [image_src, album, artist, song]
-    else:
-        print "Can't get token!"
+    '''
+    Returns information about the current playing song. If no song is currently
+    playing the most recent song will be returned.
+    '''
+
+    spotify = spotipy.Spotify(auth=token)
+    results = spotify.current_user_playing_track()
+
+    img_src = results["item"]["album"]["images"][0]["url"]
+    artist = results["item"]["album"]["artists"][0]["name"]
+    album = results["item"]["album"]["name"]
+    name = results["item"]["name"]
+    isrc = results["item"]["external_ids"]["isrc"]
+
+    return {
+        "img_src": img_src,
+        "artist": artist,
+        "album": album,
+        "name": name,
+        "id": isrc
+    }
+
+
+def itunes_search(song, artist):
+    '''
+    Check if iTunes has a higher definition album cover and
+    return the url if found
+    '''
+
+    try:
+        matches = itunespy.search_track(song)
+    except LookupError:
+        return None
+
+    for match in matches:
+        if match.artist_name == artist:
+            return match.artwork_url_100.replace('100x100b', '5000x5000b')
 
 
 def convert_image(src):
-    '''Convert the image url to Byte Array'''
-    image_str = urlopen(src).read()
-    im = Image.open(BytesIO(image_str))
-    image = ImageTk.PhotoImage(im)
-    return image
-
-
-def check_itunes_artwork(album, artist):
-    '''Search the iTunes API and grab the most popular result'''
-    i_artist = itunes.search_album(album, artist)[0]
-    hd_img = i_artist.get_artwork()['100']
-    hd_img = hd_img.replace('100x100bb', '1000x1000')
-    return hd_img
-
-
-def get_img_src():
     '''
-    Get the current playing song artwork url from Spotify,
-    search iTunes for same album and artist to get artwork,
-    return Spotify artwork if something goes wrong
+    Convert the image url to Tkinter compatible PhotoImage
     '''
-    album = get_current_playing(authorize())[1]
-    artist = get_current_playing(authorize())[2]
-    try:
-        src = check_itunes_artwork(album, artist)
-        return src
-    except Exception: # Something went wrong with iTunes, so switch the Spotify coverart
-        src = get_current_playing(authorize())[0]
-        return src
+
+    res = requests.get(src)
+    img = Image.open(BytesIO(res.content)).resize(
+        (1300, 1300), Image.ANTIALIAS)
+    pi = ImageTk.PhotoImage(img, size=())
+
+    return pi
 
 
-def draw_window():
-    '''Main event loop, draw the image and text to tkinter window'''
+def main(token):
+    '''
+    Main event loop, draw the image and text to tkinter window
+    '''
+
     root = Tk()
     root.configure(bg="black", cursor="none")
     root.attributes('-fullscreen', True)
-    f = Frame(root, bg="black", width=1920, height=1080)
+
+    f = Frame(root, bg="black", width=MONITOR_WIDTH, height=MONITOR_HEIGHT)
     f.grid(row=0, column=0, sticky="NW")
     f.grid_propagate(0)
     f.update()
 
-    # Main loop for drawing to window
+    most_recent_song = ""
     while True:
-        img_url = get_img_src()
-        # Convert img from url and place it into window
-        image = convert_image(img_url)
-        label = Label(f, image=image, highlightthickness=0, bd=0)
-        label.place(x=550, y=540, anchor="center")
-        # Size of song text label
-        size = 50
-        length = len(get_current_playing(authorize())[3])
-        if length > 18:
-            size = 30
-        if length > 30:
-            size = 20
-        # Draw the labels
-        name_label = Label(f, text=get_current_playing(authorize())[3], bg="black", fg="white", font=("Courier New", size))
-        name_label.place(x=1500, y=540, anchor="center")
-        artist_label = Label(f, text=get_current_playing(authorize())[2], bg="black", fg="white", font=("Courier New", 20))
-        artist_label.place(x=1500, y=480, anchor="center")
-        root.update_idletasks()
-        root.update()
-        time.sleep(4) # after 4 seconds destroy the previous image and labels so we can draw a new one
-        label.destroy()
-        name_label.destroy()
-        artist_label.destroy()
+        redraw = True
+
+        time.sleep(5)
+        current_song = get_current_playing(token)
+
+        if current_song["name"] != most_recent_song:
+            redraw = True
+        else:
+            redraw = False
+
+        if redraw:
+            artist = current_song["artist"]
+            name = current_song["name"]
+            most_recent_song = name
+            hd_img = itunes_search(
+                current_song["name"], current_song["artist"])
+
+            if hd_img != None:
+                pi = convert_image(hd_img)
+            else:
+                pi = convert_image(current_song["img_src"])
+
+            img_x = MONITOR_WIDTH / 3
+            img_y = MONITOR_HEIGHT / 2
+
+            label = Label(f, image=pi, highlightthickness=0, bd=0)
+            label.place(x=img_x, y=img_y, anchor="center")
+
+            artist_label = Label(
+                f,
+                text=artist,
+                bg="black",
+                fg="white",
+                font=("Courier New", 30)
+            )
+
+            artist_x = MONITOR_WIDTH - (MONITOR_WIDTH / 5)
+            artist_y = (MONITOR_HEIGHT / 2) - 50
+            artist_label.place(x=artist_x, y=artist_y, anchor="center")
+
+            song_label = Label(
+                f,
+                text=name,
+                bg="black",
+                fg="white",
+                font=("Courier New", 50),
+            )
+
+            song_x = MONITOR_WIDTH - (MONITOR_WIDTH / 5)
+            song_y = (MONITOR_HEIGHT / 2) + 50
+            song_label.place(x=song_x, y=song_y, anchor="center")
+
+            root.update()
+
+            label.destroy()
+            artist_label.destroy()
+            song_label.destroy()
 
 
 if __name__ == "__main__":
-    draw_window()
+    token = get_token()
+    main(token)
