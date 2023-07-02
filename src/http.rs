@@ -1,18 +1,18 @@
 use std::collections::HashMap;
-use std::sync::OnceLock;
 
-use reqwest::Client;
+const BASE_URL: &'static str = "https://api.spotify.com/v1";
 
-static BASE_URL: &'static str = "https://";
-static CLIENT: OnceLock<Client> = OnceLock::new();
-
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 pub enum HttpMethod {
     #[default]
     GET,
+    #[allow(unused)]
     DELETE,
+    #[allow(unused)]
     PATCH,
+    #[allow(unused)]
     POST,
+    #[allow(unused)]
     PUT,
 }
 
@@ -20,7 +20,8 @@ pub enum HttpMethod {
 pub struct HttpRequest<'a> {
     endpoint: &'a str,
     method: HttpMethod,
-    body: Option<HashMap<String, String>>,
+    body: Option<serde_json::Value>,
+    query: Option<HashMap<String, String>>,
 }
 
 impl<'a> HttpRequest<'a> {
@@ -29,6 +30,21 @@ impl<'a> HttpRequest<'a> {
             endpoint,
             method: HttpMethod::default(),
             body: None,
+            query: None,
         }
+    }
+
+    pub fn method(&mut self, method: HttpMethod) -> &'a HttpRequest {
+        self.method = method;
+        self
+    }
+
+    pub fn body(&mut self, body: serde_json::Value) -> &'a HttpRequest {
+        self.body = Some(body);
+        self
+    }
+
+    pub fn query(&mut self, query: Option<HashMap<String, String>>) -> &'a HttpRequest {
+        self
     }
 }
