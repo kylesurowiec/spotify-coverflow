@@ -24,7 +24,7 @@ pub struct HttpRequest<'a> {
     query: Option<HashMap<String, String>>,
 }
 
-impl<'a> HttpRequest<'a> {
+impl HttpRequest<'_> {
     pub fn new(endpoint: &str) -> HttpRequest {
         HttpRequest {
             endpoint,
@@ -34,17 +34,18 @@ impl<'a> HttpRequest<'a> {
         }
     }
 
-    pub fn method(&mut self, method: HttpMethod) -> &'a HttpRequest {
+    pub fn method(&mut self, method: HttpMethod) -> &HttpRequest {
         self.method = method;
         self
     }
 
-    pub fn body(&mut self, body: serde_json::Value) -> &'a HttpRequest {
+    pub fn body(&mut self, body: serde_json::Value) -> &HttpRequest {
         self.body = Some(body);
         self
     }
 
-    pub fn query(&mut self, query: Option<HashMap<String, String>>) -> &'a HttpRequest {
+    pub fn query(&mut self, query: HashMap<String, String>) -> &HttpRequest {
+        self.query = Some(query);
         self
     }
 }
