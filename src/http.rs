@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-const BASE_URL: &'static str = "https://api.spotify.com/v1";
+const BASE_URL: &str = "https://api.spotify.com/v1";
 
 #[derive(Clone, Debug, Default)]
 pub enum HttpMethod {

@@ -1,14 +1,16 @@
 mod http;
+mod os;
 mod server;
 mod spotify;
 mod util;
 
 #[tokio::main]
-async fn main() -> std::result::Result<(), ()> {
-    let config = util::get_config();
-    println!("{config:#?}");
-
+async fn main() -> anyhow::Result<()> {
     let handle = server::listen();
+
+    spotify::start_auth_flow()?;
+
+    let _ = handle.join();
 
     Ok(())
 }
