@@ -6,10 +6,8 @@ mod spotify;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let handle = server::listen();
-
-    spotify::start_auth_flow()?;
-    let _ = handle.join();
+    spotify::prompt_auth_flow().await?;
+    server::listen().await?;
 
     Ok(())
 }

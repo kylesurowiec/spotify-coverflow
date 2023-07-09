@@ -16,17 +16,31 @@ pub struct Config {
     pub oauth_refresh_token: String,
 }
 
-pub fn get_config() -> &'static Config {
+pub fn update(oauth_token: String, oauth_refresh_token: String) -> Result<Config> {
+    let config = from_cache().to_owned();
+    let config = Config {
+        oauth_token,
+        oauth_refresh_token,
+        ..config
+    };
+
+    save_to_file(config.clone())?;
+    rehydrate_cache(config.clone());
+
+    Ok(config)
+}
+
+pub fn from_cache() -> &'static Config {
     CONFIG.get_or_init(|| {
-        match read_config() {
+        match from_file() {
             | Ok(config) => Config {
                 client_id: config.client_id,
                 client_secret: config.client_secret,
                 ..Config::default()
             },
             | Err(_) => {
-                create_config().expect(
-                    "Failed to automatically create config.json. Please create this file manually at the project root"
+                save_to_file(Config::default()).expect(
+                    "Failed to create config.json. Please create this file manually at the project root"
                 );
                 panic!("Coverflow started without a config.json");
             },
@@ -34,31 +48,14 @@ pub fn get_config() -> &'static Config {
     })
 }
 
-fn update_tokens(oauth_token: String, oauth_refresh_token: String) -> Result<Config> {
-    let config = read_config()?;
-    let config = Config {
-        oauth_token,
-        oauth_refresh_token,
-        ..config
-    };
-
-    save_config(config.clone())?;
-
-    Ok(config)
-}
-
-fn read_config() -> Result<Config> {
+fn from_file() -> Result<Config> {
     let file = fs::read_to_string(CONFIG_PATH)?;
     let config = serde_json::from_str::<Config>(&file)?;
 
     Ok(config)
 }
 
-fn create_config() -> Result<()> {
-    save_config(Config::default())
-}
-
-fn save_config(config: Config) -> Result<()> {
+fn save_to_file(config: Config) -> Result<()> {
     let mut file = fs::OpenOptions::new()
         .write(true)
         .create(true)
@@ -68,4 +65,11 @@ fn save_config(config: Config) -> Result<()> {
     file.write_all(&bytes)?;
 
     Ok(())
+}
+
+fn rehydrate_cache(config: Config) {
+    let update = CONFIG.set(config);
+    if let Err(_) = update {
+        println!("Failed to update cached config")
+    };
 }

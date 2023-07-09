@@ -795,6 +795,7 @@ name = "spotify-coverflow"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64",
  "reqwest",
  "serde",
  "serde_json",
