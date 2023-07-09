@@ -24,7 +24,7 @@ pub fn update(oauth_token: String, oauth_refresh_token: String) -> Result<Config
         ..config
     };
 
-    save_to_file(config.clone())?;
+    save_to_disk(config.clone())?;
     rehydrate_cache(config.clone());
 
     Ok(config)
@@ -32,14 +32,14 @@ pub fn update(oauth_token: String, oauth_refresh_token: String) -> Result<Config
 
 pub fn from_cache() -> &'static Config {
     CONFIG.get_or_init(|| {
-        match from_file() {
+        match from_disk() {
             | Ok(config) => Config {
                 client_id: config.client_id,
                 client_secret: config.client_secret,
                 ..Config::default()
             },
             | Err(_) => {
-                save_to_file(Config::default()).expect(
+                save_to_disk(Config::default()).expect(
                     "Failed to create config.json. Please create this file manually at the project root"
                 );
                 panic!("Coverflow started without a config.json");
@@ -48,14 +48,14 @@ pub fn from_cache() -> &'static Config {
     })
 }
 
-fn from_file() -> Result<Config> {
+fn from_disk() -> Result<Config> {
     let file = fs::read_to_string(CONFIG_PATH)?;
     let config = serde_json::from_str::<Config>(&file)?;
 
     Ok(config)
 }
 
-fn save_to_file(config: Config) -> Result<()> {
+fn save_to_disk(config: Config) -> Result<()> {
     let mut file = fs::OpenOptions::new()
         .write(true)
         .create(true)
