@@ -1,7 +1,12 @@
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
+pub struct AuthCode {
+    pub code: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct OAuth {
-    pub oauth_token: String,
-    pub oauth_refresh_token: String,
+    pub access_token: String,
+    pub refresh_token: String,
 }

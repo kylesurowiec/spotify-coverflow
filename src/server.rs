@@ -18,12 +18,21 @@ pub fn listen() -> JoinHandle<()> {
                     match route {
                         | Some(_) => {
                             let query_params = parse_query_params(url);
-                            println!("{query_params:#?}");
-                            let token = spotify::get_oauth_token().await.unwrap();
-                            let config =
-                                config::update(token.oauth_token, token.oauth_refresh_token);
-                            //                     let response = Response::from_string("pong");
-                            //                     let _ = request.respond(response);
+                            if query_params.is_none() {
+                                respond_400(request, "No query params provided to auth redirect");
+                                return;
+                            }
+
+                            let code = query_params.as_ref().unwrap().get("code");
+                            if code.is_none() {
+                                respond_400(request, "Auth code not found");
+                                return;
+                            }
+
+                            let token = spotify::get_oauth_token(code.unwrap()).await.unwrap();
+                            let config = config::update(token.access_token, token.refresh_token);
+
+                            println!("{config:#?}");
                         },
                         | None => respond_404(request),
                     }
@@ -34,6 +43,10 @@ pub fn listen() -> JoinHandle<()> {
             }
         }
     })
+}
+
+fn respond_400(request: Request, message: &str) {
+    let _ = request.respond(Response::from_string(message).with_status_code(400));
 }
 
 fn respond_404(request: Request) {

@@ -6,7 +6,7 @@ mod spotify;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    spotify::prompt_auth_flow().await?;
+    spotify::prompt_auth_flow()?;
     server::listen().await?;
 
     Ok(())
