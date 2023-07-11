@@ -1,5 +1,5 @@
 use std::fs;
-use std::io::prelude::*;
+use std::io::{BufWriter, Write};
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -31,19 +31,15 @@ pub fn update(oauth_token: String, oauth_refresh_token: String) -> Result<Config
 
     save_to_disk(config.clone())?;
 
-    println!("{config:#?}");
-
     Ok(config)
 }
 
 fn save_to_disk(config: Config) -> Result<()> {
-    let mut file = fs::OpenOptions::new()
-        .write(true)
-        .create(true)
-        .open(CONFIG_PATH)?;
-    let bytes = &serde_json::to_vec(&config)?;
+    let file = fs::File::create(CONFIG_PATH)?;
+    let mut writer = BufWriter::new(file);
 
-    file.write_all(&bytes)?;
+    serde_json::to_writer(&mut writer, &config)?;
+    writer.flush()?;
 
     Ok(())
 }
