@@ -13,6 +13,7 @@ pub struct Config {
     pub oauth_token: String,
     pub oauth_refresh_token: String,
 }
+
 pub fn get() -> Result<Config> {
     let file = fs::read_to_string(CONFIG_PATH)?;
     let config = serde_json::from_str::<Config>(&file)?;
