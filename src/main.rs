@@ -7,12 +7,11 @@ mod ui;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    ui::bootstrap();
+
     spotify::prompt_auth_flow()?;
 
-    let server_thread = server::listen();
-    let ui_thread = ui::bootstrap();
-
-    futures::future::join_all(vec![server_thread, ui_thread]).await;
+    futures::future::join_all(vec![server::listen()]).await;
 
     Ok(())
 }
