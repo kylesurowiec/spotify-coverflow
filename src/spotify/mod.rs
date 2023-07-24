@@ -40,3 +40,18 @@ pub async fn get_oauth_token(code: &str) -> Result<OAuth> {
 
     Ok(request)
 }
+
+pub async fn get_new_token(refresh_token: &str) -> Result<RefreshToken> {
+    let config = config::get()?;
+
+    let request = HttpRequest::new("/api/token")
+        .base_url(AUTH_URL)
+        .method(HttpMethod::POST)
+        .basic_auth(&config.client_id, &config.client_secret)
+        .form_field("refresh_token", refresh_token)
+        .form_field("grant_type", "refresh_token")
+        .send::<RefreshToken>()
+        .await?;
+
+    Ok(request)
+}

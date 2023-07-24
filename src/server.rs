@@ -7,8 +7,8 @@ use crate::config;
 use crate::spotify;
 
 pub fn listen() -> JoinHandle<()> {
-    let server = Server::http("0.0.0.0:3000").expect("Failed to create server");
     tokio::spawn(async move {
+        let server = Server::http("0.0.0.0:3000").expect("Failed to start server");
         for request in server.incoming_requests() {
             let method = request.method();
             match method {
@@ -16,33 +16,45 @@ pub fn listen() -> JoinHandle<()> {
                     let url = request.url();
                     let route = parse_url(url, 0);
                     match route {
-                        | Some(_) => {
-                            let query_params = parse_query_params(url);
-                            if query_params.is_none() {
-                                respond_400(request, "No query params provided to auth redirect");
-                                return;
-                            }
+                        | Some(route) => match route {
+                            | "/callback" => {
+                                let query_params = parse_query_params(url);
+                                if query_params.is_none() {
+                                    respond_400(
+                                        request,
+                                        "No query params provided to auth redirect",
+                                    );
+                                    return;
+                                }
 
-                            let code = query_params.as_ref().unwrap().get("code");
-                            if code.is_none() {
-                                respond_400(request, "Auth code not found");
-                                return;
-                            }
+                                let code = query_params.as_ref().unwrap().get("code");
+                                if code.is_none() {
+                                    respond_400(request, "Auth code not found");
+                                    return;
+                                }
 
-                            let token = spotify::get_oauth_token(code.unwrap()).await.unwrap();
-                            let config = config::update(token.access_token, token.refresh_token);
+                                let token = spotify::get_oauth_token(code.unwrap()).await.unwrap();
+                                let config =
+                                    config::update(token.access_token, token.refresh_token);
 
-                            println!("{config:#?}");
+                                match config {
+                                    | Ok(_) => respond_200(request),
+                                    | Err(_) => respond_400(request, "Failed to update config"),
+                                }
+                            },
+                            | _ => respond_404(request),
                         },
                         | None => respond_404(request),
                     }
                 },
-                | _ => {
-                    respond_404(request);
-                },
+                | _ => respond_404(request),
             }
         }
     })
+}
+
+fn respond_200(request: Request) {
+    let _ = request.respond(Response::from_data([]).with_status_code(200));
 }
 
 fn respond_400(request: Request, message: &str) {
