@@ -33,9 +33,9 @@ pub fn listen() -> JoinHandle<()> {
                                     return;
                                 }
 
-                                let token = spotify::get_oauth_token(code.unwrap()).await.unwrap();
-                                let config =
-                                    config::update(token.access_token, token.refresh_token);
+                                let token =
+                                    spotify::auth::get_oauth_token(code.unwrap()).await.unwrap();
+                                let config = config::update_token(token.access_token);
 
                                 match config {
                                     | Ok(_) => respond_200(request),

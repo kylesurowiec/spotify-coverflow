@@ -7,6 +7,7 @@ use reqwest::header::HeaderMap;
 use reqwest::{Client, Method};
 use serde::de::DeserializeOwned;
 
+use crate::config;
 use crate::spotify;
 
 static CLIENT: OnceLock<Client> = OnceLock::new();
@@ -37,6 +38,15 @@ impl HttpRequest {
         }
     }
 
+    pub fn authenticated(&mut self) -> &mut HttpRequest {
+        let config = config::get().expect("Failed to read config");
+        let token = config.token.expect("Auth token does not exist");
+
+        self.header("Authorization", &format!("Bearer {token}"));
+
+        self
+    }
+
     pub fn base_url(&mut self, url: &str) -> &mut HttpRequest {
         self.base_url = Some(url.to_string());
         self
@@ -57,11 +67,13 @@ impl HttpRequest {
         self
     }
 
+    #[allow(dead_code)]
     pub fn query(&mut self, query: HashMap<String, String>) -> &mut HttpRequest {
         self.query = Some(query);
         self
     }
 
+    #[allow(dead_code)]
     pub fn body(&mut self, body: serde_json::Value) -> &mut HttpRequest {
         self.body = Some(body);
         self
@@ -108,6 +120,7 @@ impl HttpRequest {
         }
 
         let res = req.send().await?;
+        println!("{}", res.status());
         let json = res.json::<T>().await.unwrap();
 
         Ok(json)

@@ -10,8 +10,8 @@ const CONFIG_PATH: &str = "./config.json";
 pub struct Config {
     pub client_id: String,
     pub client_secret: String,
-    pub oauth_token: String,
-    pub oauth_refresh_token: String,
+    pub token: Option<String>,
+    pub refresh_token: Option<String>,
 }
 
 pub fn get() -> Result<Config> {
@@ -21,11 +21,10 @@ pub fn get() -> Result<Config> {
     Ok(config)
 }
 
-pub fn update(oauth_token: String, oauth_refresh_token: String) -> Result<Config> {
+pub fn update_token(token: String) -> Result<Config> {
     let config = get()?;
     let config = Config {
-        oauth_token,
-        oauth_refresh_token,
+        token: Some(token),
         ..config
     };
 

@@ -1,12 +1,50 @@
-use druid::widget::Label;
-use druid::{AppLauncher, WindowDesc};
+use anyhow::Result;
+use druid::widget::{Flex, Label, MainAxisAlignment};
+use druid::{AppLauncher, Color, Data, Lens, Widget, WidgetExt, WindowDesc};
 use tokio::task::JoinHandle;
 use tokio::time;
 
-const TICKRATE: time::Duration = time::Duration::from_secs(1);
+use crate::spotify;
 
-pub fn tick(_event_sink: druid::ExtEventSink) -> JoinHandle<()> {
-    tokio::spawn(async move {
+const TICKRATE: time::Duration = time::Duration::from_secs(3);
+
+#[derive(Clone, Default, Lens, Data)]
+pub struct UIState {
+    song: String,
+    artist: String,
+    album: String,
+}
+
+impl UIState {
+    pub fn new(song: String, artist: String, album: String) -> Self {
+        UIState {
+            song,
+            artist,
+            album,
+        }
+    }
+}
+
+pub fn bootstrap() -> Result<()> {
+    let main_window = WindowDesc::new(current_song_labels())
+        .show_titlebar(false)
+        .window_size((1200.0, 1000.0))
+        .title("Spotify Coverflow");
+    let launcher = AppLauncher::with_window(main_window);
+    let event_sink = launcher.get_external_handle();
+
+    tick(event_sink)?;
+
+    launcher
+        .log_to_console()
+        .launch(UIState::default())
+        .expect("Failed to launch spotify-coverflow");
+
+    Ok(())
+}
+
+pub fn tick(event_sink: druid::ExtEventSink) -> Result<JoinHandle<()>> {
+    Ok(tokio::spawn(async move {
         let tick = time::sleep(TICKRATE);
         tokio::pin!(tick);
 
@@ -14,31 +52,44 @@ pub fn tick(_event_sink: druid::ExtEventSink) -> JoinHandle<()> {
             tokio::select! {
                 () = &mut tick => {
                     println!("TICK");
+                    let current_song = spotify::get_current_song().await;
+
+                    if let Ok(current_song) = current_song {
+                        event_sink.add_idle_callback(move |data: &mut UIState| {
+                            *data = UIState::new(
+                                current_song.item.name,
+                                current_song.item.artists[0].name.clone(),
+                                current_song.item.album.name,
+                            );
+                        });
+                    }
+
                     tick.as_mut().reset(time::Instant::now() + TICKRATE);
-                    // let config = crate::config::get().expect("Failed to read config");
-                    // let _token = crate::spotify::get_new_token(&config.oauth_refresh_token).await;
                 }
             }
         }
-    })
+    }))
 }
 
-pub fn bootstrap() {
-    let main_window = WindowDesc::new(create_song_label())
-        .window_size((600.0, 400.0))
-        .title("My first Druid App");
+pub fn current_song_labels() -> impl Widget<UIState> {
+    let song_label = Label::new(|data: &String, _env: &_| format!("Song: {data}"))
+        .expand_width()
+        .lens(UIState::song);
 
-    let launcher = AppLauncher::with_window(main_window);
-    let event_sink = launcher.get_external_handle();
+    let artist_label = Label::new(|data: &String, _env: &_| format!("Artist: {data}"))
+        .expand_width()
+        .lens(UIState::artist);
 
-    tick(event_sink);
+    let album_label = Label::new(|data: &String, _env: &_| format!("Album: {data}"))
+        .expand_width()
+        .lens(UIState::album);
 
-    launcher
-        .log_to_console()
-        .launch("".to_string())
-        .expect("Failed to launch spotify-coverflow")
-}
-
-pub fn create_song_label() -> druid::widget::Label<String> {
-    Label::new("Testing 123")
+    Flex::column()
+        .main_axis_alignment(MainAxisAlignment::Center)
+        .with_default_spacer()
+        .with_flex_child(song_label, 1.0)
+        .with_flex_child(artist_label, 1.0)
+        .with_flex_child(album_label, 1.0)
+        .align_right()
+        .border(Color::RED, 100.0)
 }
