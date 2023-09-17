@@ -1,9 +1,12 @@
+mod widgets;
+
 use anyhow::Result;
 use druid::widget::{Flex, Label, MainAxisAlignment};
 use druid::{AppLauncher, Color, Data, Lens, Widget, WidgetExt, WindowDesc};
 use tokio::task::JoinHandle;
 use tokio::time;
 
+use self::widgets::image::ImageWidget;
 use crate::spotify;
 
 const TICKRATE: time::Duration = time::Duration::from_secs(3);
@@ -13,14 +16,16 @@ pub struct UIState {
     song: String,
     artist: String,
     album: String,
+    album_art: String,
 }
 
 impl UIState {
-    pub fn new(song: String, artist: String, album: String) -> Self {
+    pub fn new(song: String, artist: String, album: String, album_art: String) -> Self {
         UIState {
             song,
             artist,
             album,
+            album_art,
         }
     }
 }
@@ -60,6 +65,7 @@ pub fn tick(event_sink: druid::ExtEventSink) -> Result<JoinHandle<()>> {
                                 current_song.item.name,
                                 current_song.item.artists[0].name.clone(),
                                 current_song.item.album.name,
+                                current_song.item.album.images[0].url.clone(),
                             );
                         });
                     }
@@ -72,17 +78,19 @@ pub fn tick(event_sink: druid::ExtEventSink) -> Result<JoinHandle<()>> {
 }
 
 pub fn current_song_labels() -> impl Widget<UIState> {
-    let song_label = Label::new(|data: &String, _env: &_| format!("Song: {data}"))
+    let song_label = Label::new(|data: &String, _: &_| format!("Song: {data}"))
         .expand_width()
         .lens(UIState::song);
 
-    let artist_label = Label::new(|data: &String, _env: &_| format!("Artist: {data}"))
+    let artist_label = Label::new(|data: &String, _: &_| format!("Artist: {data}"))
         .expand_width()
         .lens(UIState::artist);
 
-    let album_label = Label::new(|data: &String, _env: &_| format!("Album: {data}"))
+    let album_label = Label::new(|data: &String, _: &_| format!("Album: {data}"))
         .expand_width()
         .lens(UIState::album);
+
+    let album_art = ImageWidget::new().expand_width().lens(UIState::album_art);
 
     Flex::column()
         .main_axis_alignment(MainAxisAlignment::Center)
@@ -90,6 +98,7 @@ pub fn current_song_labels() -> impl Widget<UIState> {
         .with_flex_child(song_label, 1.0)
         .with_flex_child(artist_label, 1.0)
         .with_flex_child(album_label, 1.0)
+        .with_flex_child(album_art, 1.0)
         .align_right()
-        .border(Color::RED, 100.0)
+        .border(Color::RED, 10.0)
 }
