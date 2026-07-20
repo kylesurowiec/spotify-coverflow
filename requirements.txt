@@ -11,7 +11,7 @@ pipenv==2022.1.8
 pycodestyle==2.4.0
 pylint==2.1.1
 PyYAML==5.4
-requests==2.31.0
+requests==2.33.0
 six==1.11.0
 spotipy==2.25.2
 urllib3==2.7.0
